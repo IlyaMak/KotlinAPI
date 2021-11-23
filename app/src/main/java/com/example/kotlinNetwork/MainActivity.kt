@@ -3,7 +3,6 @@ package com.example.kotlinNetwork
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,7 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import okhttp3.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -30,6 +28,9 @@ class MainActivity : AppCompatActivity() , CoroutineScope by MainScope() {
     lateinit var adapter: AdapterCharacter
     lateinit var recyclerCharacterList: RecyclerView
 
+    private val publicKey = BuildConfig.publicKey
+    private val privateKey = BuildConfig.privateKey
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -42,23 +43,15 @@ class MainActivity : AppCompatActivity() , CoroutineScope by MainScope() {
         launch(Dispatchers.Main) {
             mService = Marvel.retrofitMarvelService
             val timestamp = (System.currentTimeMillis() / 1000).toInt().toString()
-            Log.d("timestamp", timestamp)
-            val apiKey = ""
-            Log.d("apiKey", apiKey)
-            val input = timestamp + "" + apiKey
-            Log.d("input", input)
+            val input = timestamp + privateKey + publicKey
             val hash = BigInteger(1, MessageDigest.getInstance("MD5").digest(
                 input.toByteArray())).toString(16).padStart(32, '0')
-            mService.getCharacterList(timestamp, apiKey, hash).enqueue(
+            mService.getCharacterList(timestamp, publicKey, hash).enqueue(
                 object : Callback<MarvelResponse> {
-                    override fun onFailure(call: Call<MarvelResponse>, t: Throwable) {
-                        Log.d("error2", t.message!!)
-                    }
+                    override fun onFailure(call: Call<MarvelResponse>, t: Throwable) { }
 
                     override fun onResponse(call: Call<MarvelResponse>,
-                                            response: Response<MarvelResponse>
-                    ) {
-                        Log.d("success", response.code().toString())
+                                            response: Response<MarvelResponse>) {
                         val marvelResponse = response.body() as MarvelResponse
                         adapter = AdapterCharacter(baseContext, marvelResponse.data.results)
                         adapter.notifyDataSetChanged()
